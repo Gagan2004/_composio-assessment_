@@ -1103,6 +1103,306 @@ python src/verifier.py ; python src/embed_html.py
     }
     /* COMPOSIO_EMBED_END */
 
+    let currentSelectedApp = null;
+    let sortState = { col: null, dir: 'asc' };
+
+    function switchTab(tabId) {
+      document.querySelectorAll('.tab-content').forEach(el => el.style.display = 'none');
+      document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
+
+      const targetTab = document.getElementById('tab-' + tabId);
+      if (targetTab) targetTab.style.display = 'block';
+
+      if (event && event.currentTarget) {
+        event.currentTarget.classList.add('active');
+      }
+    }
+
+    function setCategoryFilter(cat) {
+      currentCategory = cat;
+      document.querySelectorAll('.pill').forEach(btn => {
+        btn.classList.remove('active');
+      });
+      if (event && event.currentTarget) {
+        event.currentTarget.classList.add('active');
+      }
+      filterTable();
+    }
+
+    function filterTable() {
+      const q = (document.getElementById('searchInput').value || '').toLowerCase().trim();
+      const clearBtn = document.getElementById('searchClearBtn');
+      if (clearBtn) clearBtn.style.display = q.length > 0 ? 'block' : 'none';
+
+      let filtered = appDataset.filter(app => {
+        const matchesCat = (currentCategory === 'all') || (app.category === currentCategory);
+        const matchesQuery = !q || 
+          app.name.toLowerCase().includes(q) ||
+          app.category.toLowerCase().includes(q) ||
+          (app.auth_methods || []).join(' ').toLowerCase().includes(q) ||
+          (app.buildability_verdict || '').toLowerCase().includes(q) ||
+          (app.self_serve_status && app.self_serve_status.toLowerCase().includes(q)) ||
+          (app.main_blocker && app.main_blocker.toLowerCase().includes(q));
+
+        return matchesCat && matchesQuery;
+      });
+
+      if (sortState.col) {
+        filtered = sortArray(filtered, sortState.col, sortState.dir);
+      }
+
+      renderTable(filtered);
+    }
+
+    function clearSearch() {
+      const input = document.getElementById('searchInput');
+      if (input) input.value = '';
+      filterTable();
+    }
+
+    function sortTable(colKey) {
+      if (sortState.col === colKey) {
+        sortState.dir = sortState.dir === 'asc' ? 'desc' : 'asc';
+      } else {
+        sortState.col = colKey;
+        sortState.dir = 'asc';
+      }
+
+      document.querySelectorAll('th').forEach(th => {
+        th.classList.remove('sorted');
+        const icon = th.querySelector('.sort-icon');
+        if (icon) icon.className = 'fa-solid fa-sort sort-icon';
+      });
+
+      const activeTh = document.getElementById('th-' + colKey);
+      if (activeTh) {
+        activeTh.classList.add('sorted');
+        const icon = activeTh.querySelector('.sort-icon');
+        if (icon) {
+          icon.className = sortState.dir === 'asc' ? 'fa-solid fa-sort-up sort-icon' : 'fa-solid fa-sort-down sort-icon';
+        }
+      }
+
+      filterTable();
+    }
+
+    function sortArray(arr, key, dir) {
+      return [...arr].sort((a, b) => {
+        let valA = a[key] || '';
+        let valB = b[key] || '';
+        if (key === 'auth') {
+          valA = (a.auth_methods || []).join(', ');
+          valB = (b.auth_methods || []).join(', ');
+        } else if (key === 'gating') {
+          valA = a.self_serve_status || '';
+          valB = b.self_serve_status || '';
+        } else if (key === 'verdict') {
+          valA = a.buildability_verdict || '';
+          valB = b.buildability_verdict || '';
+        }
+        if (typeof valA === 'string') valA = valA.toLowerCase();
+        if (typeof valB === 'string') valB = valB.toLowerCase();
+
+        if (valA < valB) return dir === 'asc' ? -1 : 1;
+        if (valA > valB) return dir === 'asc' ? 1 : -1;
+        return 0;
+      });
+    }
+
+    function renderTable(apps) {
+      const tbody = document.getElementById('appTableBody');
+      if (!tbody) return;
+      tbody.innerHTML = '';
+
+      if (!apps || apps.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="7" style="text-align: center; padding: 30px; color: var(--text-dim);">No matching apps found. Try clearing search query or category filters.</td></tr>`;
+        return;
+      }
+
+      apps.forEach((app, idx) => {
+        const tr = document.createElement('tr');
+        tr.onclick = () => openModal(app);
+
+        let verdictClass = 'badge-verdict-ready';
+        let verdictIcon = '<i class="fa-solid fa-circle-check"></i>';
+        if (app.buildability_verdict.includes('Workaround')) {
+          verdictClass = 'badge-verdict-workaround';
+          verdictIcon = '<i class="fa-solid fa-clock"></i>';
+        } else if (app.buildability_verdict.includes('Blocked')) {
+          verdictClass = 'badge-verdict-blocked';
+          verdictIcon = '<i class="fa-solid fa-lock"></i>';
+        }
+
+        const authBadges = (app.auth_methods || []).map(m => `<span class="badge badge-auth">${m}</span>`).join(' ');
+
+        tr.innerHTML = `
+          <td style="color: var(--text-dim); font-weight: 600; font-family: var(--font-mono);">${app.id || idx + 1}</td>
+          <td>
+            <div class="app-title-cell">
+              <span class="app-name">${app.name}</span>
+              <span class="app-category">${app.category}</span>
+            </div>
+          </td>
+          <td>${authBadges}</td>
+          <td><span class="badge badge-gating">${app.self_serve_status || 'Self-Serve'}</span></td>
+          <td><span class="badge ${verdictClass}">${verdictIcon} ${app.buildability_verdict}</span></td>
+          <td style="font-size: 12px; color: var(--text-muted); max-width: 220px;">${app.main_blocker || 'None'}</td>
+          <td><a href="${app.evidence_url}" target="_blank" class="evidence-link" onclick="event.stopPropagation()">Docs <i class="fa-solid fa-arrow-up-right-from-square"></i></a></td>
+        `;
+
+        tbody.appendChild(tr);
+      });
+    }
+
+    function renderSampleTable(sample) {
+      const tbody = document.getElementById('sampleTableBody');
+      if (!tbody || !sample) return;
+      tbody.innerHTML = '';
+
+      sample.forEach(item => {
+        const tr = document.createElement('tr');
+        const isMatch = item.audit_verdict.includes("Accurate") || item.audit_verdict.includes("Confirmed");
+        const tagClass = isMatch ? "hit-tag" : "correction-tag";
+        const tagText = isMatch ? "HIT (100% Accurate)" : "CORRECTION APPLIED";
+
+        tr.innerHTML = `
+          <td style="font-family: var(--font-mono); color: var(--text-dim);">${item.app_id}</td>
+          <td style="font-weight: 700; color: #fff;">${item.app_name}</td>
+          <td style="color: var(--text-muted);">${item.category}</td>
+          <td style="color: var(--text-muted); font-size: 12px;">${item.pass1_draft_verdict || 'Ready Today'}</td>
+          <td><span class="badge badge-verdict-ready"><i class="fa-solid fa-check"></i> ${item.pass2_verified_verdict}</span></td>
+          <td><span class="${tagClass}">${tagText}</span> <span style="font-size: 12px; color: var(--text-muted); margin-left: 6px;">${item.correction_reason}</span></td>
+        `;
+        tbody.appendChild(tr);
+      });
+    }
+
+    function openModal(app) {
+      currentSelectedApp = app;
+      document.getElementById('modalAppName').innerText = app.name;
+      document.getElementById('modalAppCat').innerText = app.category;
+      document.getElementById('modalDesc').innerText = app.description || 'N/A';
+      document.getElementById('modalAuth').innerHTML = (app.auth_methods || []).map(m => `<span class="badge badge-auth">${m}</span>`).join(' ');
+      document.getElementById('modalGating').innerText = app.self_serve_status || app.gating_category || 'Self-Serve';
+      document.getElementById('modalApi').innerText = app.api_surface || 'REST API';
+      document.getElementById('modalMcp').innerText = app.mcp_status || 'Composio Ready';
+      document.getElementById('modalVerdict').innerText = app.buildability_verdict;
+      document.getElementById('modalNotes').innerText = (app.main_blocker && app.main_blocker !== 'None') ? `Blocker: ${app.main_blocker}` : 'No buildability blockers reported. Ready for immediate toolkit integration.';
+      document.getElementById('modalDocLink').href = app.evidence_url;
+
+      const modal = document.getElementById('detailModal');
+      if (modal) modal.classList.add('active');
+    }
+
+    function closeModal(event) {
+      if (!event || event.target.id === 'detailModal' || event.target.closest('.modal-close')) {
+        const modal = document.getElementById('detailModal');
+        if (modal) modal.classList.remove('active');
+      }
+    }
+
+    function copyAppDetails() {
+      if (!currentSelectedApp) return;
+      const detailsText = JSON.stringify(currentSelectedApp, null, 2);
+      const btn = document.getElementById('modalCopyBtn');
+
+      navigator.clipboard.writeText(detailsText).then(() => {
+        if (btn) {
+          btn.innerHTML = '<i class="fa-solid fa-check" style="color: #34d399;"></i> Copied!';
+          setTimeout(() => {
+            btn.innerHTML = '<i class="fa-regular fa-copy"></i> Copy Details';
+          }, 2000);
+        }
+      }).catch(err => {
+        console.error('Clipboard error:', err);
+      });
+    }
+
+    document.addEventListener('keydown', function(e) {
+      if (e.key === 'Escape') {
+        const modal = document.getElementById('detailModal');
+        if (modal && modal.classList.contains('active')) {
+          modal.classList.remove('active');
+        }
+      }
+    });
+
+    function initCharts() {
+      // 1. Auth Distribution Chart
+      const authCtx = document.getElementById('authChart');
+      if (authCtx) {
+        new Chart(authCtx, {
+          type: 'doughnut',
+          data: {
+            labels: ['OAuth2 (Delegated)', 'API Key / PAT', 'Basic / Token / Custom'],
+            datasets: [{
+              data: [46, 41, 13],
+              backgroundColor: ['#8b5cf6', '#10b981', '#06b6d4'],
+              borderWidth: 0
+            }]
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+              legend: { position: 'bottom', labels: { color: '#9ca3af', font: { family: 'Plus Jakarta Sans', size: 11 } } }
+            }
+          }
+        });
+      }
+
+      // 2. Gating Distribution Chart
+      const gatingCtx = document.getElementById('gatingChart');
+      if (gatingCtx) {
+        new Chart(gatingCtx, {
+          type: 'doughnut',
+          data: {
+            labels: ['Self-Serve Free/Trial', 'Paid / Sandbox Only', 'Enterprise Gated'],
+            datasets: [{
+              data: [81, 8, 11],
+              backgroundColor: ['#10b981', '#f59e0b', '#f43f5e'],
+              borderWidth: 0
+            }]
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+              legend: { position: 'bottom', labels: { color: '#9ca3af', font: { family: 'Plus Jakarta Sans', size: 11 } } }
+            }
+          }
+        });
+      }
+
+      // 3. Verdict Distribution Chart
+      const verdictCtx = document.getElementById('verdictChart');
+      if (verdictCtx) {
+        new Chart(verdictCtx, {
+          type: 'bar',
+          data: {
+            labels: ['Ready Today', 'Workaround Required', 'Blocked'],
+            datasets: [{
+              label: 'Apps Count',
+              data: [79, 13, 8],
+              backgroundColor: ['#10b981', '#f59e0b', '#f43f5e'],
+              borderRadius: 6
+            }]
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+              legend: { display: false }
+            },
+            scales: {
+              x: { ticks: { color: '#9ca3af' }, grid: { display: false } },
+              y: { ticks: { color: '#9ca3af' }, grid: { color: 'rgba(255, 255, 255, 0.05)' } }
+            }
+          }
+        });
+      }
+    }
+
     window.onload = loadData;
   </script>
 </body>

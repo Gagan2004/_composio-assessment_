@@ -29,17 +29,8 @@ with open(SAMPLE_FILE, "r", encoding="utf-8") as f:
 with open(HTML_FILE, "r", encoding="utf-8") as f:
     html_content = f.read()
 
-# ── Idempotency guard ─────────────────────────────────────────────────────────
-# If a previous embed is present (delimiters found), strip it back to the
-# original anchor point so a re-run produces an identical result.
-if EMBED_START_MARKER in html_content and EMBED_END_MARKER in html_content:
-    s = html_content.find(EMBED_START_MARKER)
-    e = html_content.find(EMBED_END_MARKER) + len(EMBED_END_MARKER)
-    html_content = html_content[:s] + "let appDataset =" + html_content[e:]
-    print("[INFO] Previous embed detected and stripped. Re-injecting with fresh data...")
-
 # ── Build the replacement script block ───────────────────────────────────────
-embedded_script = f"""    {EMBED_START_MARKER}
+embedded_script = f"""{EMBED_START_MARKER}
     let appDataset = {json.dumps(verified_data["apps"])};
     let auditSample = {json.dumps(sample_data["audit_sample"])};
     let currentCategory = 'all';
@@ -65,26 +56,28 @@ embedded_script = f"""    {EMBED_START_MARKER}
     }}
     {EMBED_END_MARKER}"""
 
-# ── Inject ────────────────────────────────────────────────────────────────────
-start_marker = "let appDataset ="
-end_marker   = "window.onload = loadData;"
-
-if start_marker in html_content and end_marker in html_content:
-    start_idx = html_content.find(start_marker)
-    end_idx   = html_content.find(end_marker)
-    new_html  = html_content[:start_idx] + embedded_script.strip() + "\n\n    " + html_content[end_idx:]
-
-    with open(HTML_FILE, "w", encoding="utf-8") as f:
-        f.write(new_html)
-
-    # ── Post-write validation ─────────────────────────────────────────────────
-    with open(HTML_FILE, "r", encoding="utf-8") as f:
-        written = f.read()
-
-    first_app_name = verified_data["apps"][0]["name"]
-    if first_app_name in written and EMBED_START_MARKER in written:
-        print(f"[SUCCESS] Embed verified OK — '{first_app_name}' found in index.html ({len(verified_data['apps'])} apps embedded).")
-    else:
-        print("[VALIDATION FAILED] Embedded data not detected in written file — check markers in index.html.")
+# ── Idempotency & Injection ───────────────────────────────────────────────────
+if EMBED_START_MARKER in html_content and EMBED_END_MARKER in html_content:
+    start_idx = html_content.find(EMBED_START_MARKER)
+    end_idx = html_content.find(EMBED_END_MARKER) + len(EMBED_END_MARKER)
+    new_html = html_content[:start_idx] + embedded_script.strip() + html_content[end_idx:]
+elif "let appDataset =" in html_content:
+    start_idx = html_content.find("let appDataset =")
+    end_idx = html_content.find("window.onload = loadData;")
+    new_html = html_content[:start_idx] + embedded_script.strip() + "\n\n    " + html_content[end_idx:]
 else:
-    print("[ERROR] Could not find script anchor markers in index.html. Ensure 'let appDataset =' and 'window.onload = loadData;' are present.")
+    print("[ERROR] Could not find script anchor markers in index.html.")
+    exit(1)
+
+with open(HTML_FILE, "w", encoding="utf-8") as f:
+    f.write(new_html)
+
+# ── Post-write validation ─────────────────────────────────────────────────
+with open(HTML_FILE, "r", encoding="utf-8") as f:
+    written = f.read()
+
+first_app_name = verified_data["apps"][0]["name"]
+if first_app_name in written and EMBED_START_MARKER in written:
+    print(f"[SUCCESS] Embed verified OK — '{first_app_name}' found in index.html ({len(verified_data['apps'])} apps embedded).")
+else:
+    print("[VALIDATION FAILED] Embedded data not detected in written file — check markers in index.html.")
