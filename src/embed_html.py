@@ -32,6 +32,7 @@ with open(HTML_FILE, "r", encoding="utf-8") as f:
 # ── Build the replacement script block ───────────────────────────────────────
 embedded_script = f"""{EMBED_START_MARKER}
     let appDataset = {json.dumps(verified_data["apps"])};
+    let pipelineTelemetry = {json.dumps(verified_data.get("telemetry", {}))};
     let auditSample = {json.dumps(sample_data["audit_sample"])};
     let currentCategory = 'all';
 
@@ -41,6 +42,7 @@ embedded_script = f"""{EMBED_START_MARKER}
         if (res.ok) {{
           const data = await res.json();
           appDataset = data.apps;
+          pipelineTelemetry = data.telemetry || pipelineTelemetry;
         }}
         const resSample = await fetch('data/verification_sample.json');
         if (resSample.ok) {{
