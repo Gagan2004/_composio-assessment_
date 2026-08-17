@@ -729,22 +729,22 @@
         <div class="metrics-summary-grid">
           <div class="metric-card">
             <div class="metric-label">Total Apps Analyzed</div>
-            <div class="metric-value">100</div>
+            <div class="metric-value" id="metricTotal">100</div>
             <div class="metric-sub">Across 10 Categories</div>
           </div>
           <div class="metric-card">
             <div class="metric-label">Self-Serve Ratio</div>
-            <div class="metric-value" style="color: #34d399;">81%</div>
+            <div class="metric-value" id="metricSelfServe" style="color: #34d399;">81%</div>
             <div class="metric-sub">Instant Dev Access</div>
           </div>
           <div class="metric-card">
             <div class="metric-label">Toolkit Ready Today</div>
-            <div class="metric-value" style="color: #60a5fa;">79%</div>
-            <div class="metric-sub">79 / 100 Apps Callable</div>
+            <div class="metric-value" id="metricReady" style="color: #60a5fa;">79%</div>
+            <div class="metric-sub" id="metricReadySub">79 / 100 Apps Callable</div>
           </div>
           <div class="metric-card">
             <div class="metric-label">Verified Accuracy</div>
-            <div class="metric-value" style="color: #a78bfa;">96.0%</div>
+            <div class="metric-value" id="metricAccuracy" style="color: #a78bfa;">96.0%</div>
             <div class="metric-sub">+10.8% Delta from Pass 1</div>
           </div>
         </div>
@@ -774,26 +774,26 @@
       <div class="headline-card">
         <span class="headline-badge"><i class="fa-solid fa-bullseye"></i> Executive Summary</span>
         <h3 style="font-size: 20px; color: #fff; font-weight: 700; margin-bottom: 8px;">
-          The Ecosystem Patterns Across 100 Apps (2-Minute Skim)
+          The Ecosystem Patterns Across <span id="summaryTotalAppsText">100</span> Apps (2-Minute Skim)
         </h3>
         <p style="color: #cbd5e1; font-size: 14px;">
-          We built an automated research pipeline powered by Composio SDK patterns to evaluate 100 customer-requested SaaS platforms. Here are the core structural trends:
+          We built an automated research pipeline powered by Composio SDK patterns to evaluate customer-requested SaaS platforms. Here are the core structural trends:
         </p>
 
         <div class="headline-grid">
           <div class="headline-item">
             <h4><i class="fa-solid fa-key" style="color: var(--accent-purple);"></i> Auth Paradigm Split</h4>
-            <p><strong>OAuth2 dominates B2B SaaS (46%)</strong> across CRM, Messaging, and Support. <strong>API Keys / Bearer Tokens (41%)</strong> lead Developer Infra and AI/Data platforms. Basic/Custom auth accounts for 13%.</p>
+            <p id="summaryAuthText"><strong>OAuth2 dominates B2B SaaS (46%)</strong> across CRM, Messaging, and Support. <strong>API Keys / Bearer Tokens (41%)</strong> lead Developer Infra and AI/Data platforms. Basic/Custom auth accounts for 13%.</p>
           </div>
 
           <div class="headline-item">
             <h4><i class="fa-solid fa-door-open" style="color: var(--accent-teal);"></i> Self-Serve vs Gated</h4>
-            <p><strong>81% of apps offer self-serve paths</strong> via free tiers, developer sandboxes, or instant PATs. The remaining <strong>19% are gated</strong> by enterprise sales, partner application reviews, or merchant checks.</p>
+            <p id="summaryGatingText"><strong>81% of apps offer self-serve paths</strong> via free tiers, developer sandboxes, or instant PATs. The remaining <strong>19% are gated</strong> by enterprise sales, partner application reviews, or merchant checks.</p>
           </div>
 
           <div class="headline-item">
             <h4><i class="fa-solid fa-triangle-exclamation" style="color: var(--accent-amber);"></i> Primary Buildability Blockers</h4>
-            <p><strong>Enterprise Sales/Partner Gates (11%)</strong> are the #1 blocker (e.g. DealCloud, PitchBook, Paygent). <strong>App Review processes (5%)</strong> block instant Meta/Google Ads deployment. <strong>No REST API (3%)</strong> requires UI automation (e.g. NotebookLM).</p>
+            <p id="summaryBlockerText"><strong>Enterprise Sales/Partner Gates (11%)</strong> are the #1 blocker (e.g. DealCloud, PitchBook, Paygent). <strong>App Review processes (5%)</strong> block instant Meta/Google Ads deployment. <strong>No REST API (3%)</strong> requires UI automation (e.g. NotebookLM).</p>
           </div>
         </div>
       </div>
@@ -801,7 +801,7 @@
       <!-- Pattern Charts Grid -->
       <div class="charts-grid">
         <div class="chart-box">
-          <h4>Authentication Distribution <span>100 Apps</span></h4>
+          <h4>Authentication Distribution <span id="chartAuthSub">100 Apps</span></h4>
           <div class="chart-container" id="authChartContainer">
             <canvas id="authChart"></canvas>
           </div>
@@ -836,7 +836,7 @@
             <p style="font-size: 13px; color: var(--text-muted); line-height: 1.5;">
               High customer demand, instant self-serve API keys, zero app review barriers. Build immediate Composio toolkits today.
             </p>
-            <div style="margin-top: 12px; font-size: 12px; color: #fff; font-family: var(--font-mono);">
+            <div id="tier1Apps" style="margin-top: 12px; font-size: 12px; color: #fff; font-family: var(--font-mono);">
               Linear, Supabase, Firecrawl, Airtable, Reducto, Notion, Apify, Vercel
             </div>
           </div>
@@ -848,7 +848,7 @@
             <p style="font-size: 13px; color: var(--text-muted); line-height: 1.5;">
               High enterprise utility, but requires robust multi-tenant OAuth refresh token management and dev sandbox apps.
             </p>
-            <div style="margin-top: 12px; font-size: 12px; color: #fff; font-family: var(--font-mono);">
+            <div id="tier2Apps" style="margin-top: 12px; font-size: 12px; color: #fff; font-family: var(--font-mono);">
               HubSpot, Salesforce, Zendesk, QuickBooks, Shopify, Meta Ads, Slack
             </div>
           </div>
@@ -860,7 +860,7 @@
             <p style="font-size: 13px; color: var(--text-muted); line-height: 1.5;">
               Strictly gated behind enterprise contracts or manual approval forms. Requires Composio BD / Partner outreach.
             </p>
-            <div style="margin-top: 12px; font-size: 12px; color: #fff; font-family: var(--font-mono);">
+            <div id="tier3Apps" style="margin-top: 12px; font-size: 12px; color: #fff; font-family: var(--font-mono);">
               DealCloud, PitchBook, Paygent Connect, LinkedIn Ads, Gladly
             </div>
           </div>
@@ -1304,65 +1304,163 @@
       }
     });
 
-    function renderFallbackBars() {
-      // Auth Bars
+    function calculateMetrics(dataset) {
+      if (!dataset || dataset.length === 0) return null;
+
+      const totalApps = dataset.length;
+      let selfServeCount = 0;
+      let readyTodayCount = 0;
+      let workaroundCount = 0;
+      let blockedCount = 0;
+
+      let oauth2Count = 0;
+      let apiKeyCount = 0;
+      let otherAuthCount = 0;
+
+      let sandboxCount = 0;
+      let gatedCount = 0;
+
+      let tier1 = [];
+      let tier2 = [];
+      let tier3 = [];
+
+      dataset.forEach(app => {
+        const v = app.buildability_verdict || '';
+        const g = app.self_serve_status || app.gating_category || '';
+        const auths = (app.auth_methods || []).join(' ');
+
+        if (v.includes('Ready')) readyTodayCount++;
+        else if (v.includes('Workaround')) workaroundCount++;
+        else if (v.includes('Blocked')) blockedCount++;
+
+        if (g.toLowerCase().includes('self-serve') || g.toLowerCase().includes('free')) {
+          selfServeCount++;
+        } else if (g.toLowerCase().includes('sandbox') || g.toLowerCase().includes('paid') || g.toLowerCase().includes('trial')) {
+          sandboxCount++;
+        } else {
+          gatedCount++;
+        }
+
+        if (auths.includes('OAuth2')) oauth2Count++;
+        else if (auths.includes('API Key') || auths.includes('PAT') || auths.includes('Bearer')) apiKeyCount++;
+        else otherAuthCount++;
+
+        if (v.includes('Ready') && (auths.includes('API Key') || auths.includes('PAT')) && g.toLowerCase().includes('self-serve')) {
+          if (tier1.length < 8) tier1.push(app.name);
+        } else if (v.includes('Ready') && auths.includes('OAuth2')) {
+          if (tier2.length < 8) tier2.push(app.name);
+        } else if (v.includes('Blocked') || v.includes('Workaround') || g.toLowerCase().includes('gated')) {
+          if (tier3.length < 8) tier3.push(app.name);
+        }
+      });
+
+      const elTotal = document.getElementById('metricTotal');
+      if (elTotal) elTotal.innerText = totalApps;
+
+      const elTotalSum = document.getElementById('summaryTotalAppsText');
+      if (elTotalSum) elTotalSum.innerText = totalApps;
+
+      const elSelfServe = document.getElementById('metricSelfServe');
+      if (elSelfServe) elSelfServe.innerText = Math.round((selfServeCount / totalApps) * 100) + '%';
+
+      const elReady = document.getElementById('metricReady');
+      if (elReady) elReady.innerText = Math.round((readyTodayCount / totalApps) * 100) + '%';
+
+      const elReadySub = document.getElementById('metricReadySub');
+      if (elReadySub) elReadySub.innerText = `${readyTodayCount} / ${totalApps} Apps Callable`;
+
+      const elAuthSub = document.getElementById('chartAuthSub');
+      if (elAuthSub) elAuthSub.innerText = `${totalApps} Apps`;
+
+      const elSummaryAuth = document.getElementById('summaryAuthText');
+      if (elSummaryAuth) {
+        elSummaryAuth.innerHTML = `<strong>OAuth2 dominates B2B SaaS (${Math.round(oauth2Count/totalApps*100)}%)</strong> across CRM, Messaging, and Support. <strong>API Keys / Bearer Tokens (${Math.round(apiKeyCount/totalApps*100)}%)</strong> lead Developer Infra and AI/Data platforms. Basic/Custom auth accounts for ${Math.round(otherAuthCount/totalApps*100)}%.`;
+      }
+
+      const elSummaryGating = document.getElementById('summaryGatingText');
+      if (elSummaryGating) {
+        elSummaryGating.innerHTML = `<strong>${Math.round(selfServeCount/totalApps*100)}% of apps offer self-serve paths</strong> via free tiers, developer sandboxes, or instant PATs. The remaining <strong>${100 - Math.round(selfServeCount/totalApps*100)}% are gated</strong> by enterprise sales or partner application reviews.`;
+      }
+
+      const elSummaryBlocker = document.getElementById('summaryBlockerText');
+      if (elSummaryBlocker) {
+        elSummaryBlocker.innerHTML = `<strong>Enterprise Sales/Partner Gates (${Math.round(gatedCount/totalApps*100)}%)</strong> are the #1 blocker. <strong>Workaround Required (${Math.round(workaroundCount/totalApps*100)}%)</strong> block instant deployment. <strong>Blocked Apps (${Math.round(blockedCount/totalApps*100)}%)</strong> require BD outreach.`;
+      }
+
+      if (tier1.length > 0 && document.getElementById('tier1Apps')) document.getElementById('tier1Apps').innerText = tier1.join(', ');
+      if (tier2.length > 0 && document.getElementById('tier2Apps')) document.getElementById('tier2Apps').innerText = tier2.join(', ');
+      if (tier3.length > 0 && document.getElementById('tier3Apps')) document.getElementById('tier3Apps').innerText = tier3.join(', ');
+
+      return {
+        totalApps,
+        auth: [oauth2Count, apiKeyCount, otherAuthCount],
+        verdict: [readyTodayCount, workaroundCount, blockedCount],
+        gating: [selfServeCount, sandboxCount, gatedCount]
+      };
+    }
+
+    function renderFallbackBars(metrics) {
+      if (!metrics) return;
+      const t = metrics.totalApps;
+      const [oauth, apikey, otherAuth] = metrics.auth;
+      const [ready, workaround, blocked] = metrics.verdict;
+      const [selfserve, sandbox, gated] = metrics.gating;
+
       const authBox = document.getElementById('authChartContainer');
       if (authBox) {
         authBox.innerHTML = `
           <div class="custom-bar-list">
             <div class="custom-bar-item">
-              <div class="custom-bar-header"><span>OAuth2 (Delegated)</span><span>46% (46 Apps)</span></div>
-              <div class="custom-bar-track"><div class="custom-bar-fill" style="width: 46%; background: #8b5cf6;"></div></div>
+              <div class="custom-bar-header"><span>OAuth2 (Delegated)</span><span>${Math.round(oauth/t*100)}% (${oauth} Apps)</span></div>
+              <div class="custom-bar-track"><div class="custom-bar-fill" style="width: ${Math.round(oauth/t*100)}%; background: #8b5cf6;"></div></div>
             </div>
             <div class="custom-bar-item">
-              <div class="custom-bar-header"><span>API Key / Bearer Tokens</span><span>41% (41 Apps)</span></div>
-              <div class="custom-bar-track"><div class="custom-bar-fill" style="width: 41%; background: #10b981;"></div></div>
+              <div class="custom-bar-header"><span>API Key / Bearer Tokens</span><span>${Math.round(apikey/t*100)}% (${apikey} Apps)</span></div>
+              <div class="custom-bar-track"><div class="custom-bar-fill" style="width: ${Math.round(apikey/t*100)}%; background: #10b981;"></div></div>
             </div>
             <div class="custom-bar-item">
-              <div class="custom-bar-header"><span>Basic / JWT / Custom</span><span>13% (13 Apps)</span></div>
-              <div class="custom-bar-track"><div class="custom-bar-fill" style="width: 13%; background: #06b6d4;"></div></div>
+              <div class="custom-bar-header"><span>Basic / JWT / Custom</span><span>${Math.round(otherAuth/t*100)}% (${otherAuth} Apps)</span></div>
+              <div class="custom-bar-track"><div class="custom-bar-fill" style="width: ${Math.round(otherAuth/t*100)}%; background: #06b6d4;"></div></div>
             </div>
           </div>
         `;
       }
 
-      // Verdict Bars
       const verdictBox = document.getElementById('verdictChartContainer');
       if (verdictBox) {
         verdictBox.innerHTML = `
           <div class="custom-bar-list">
             <div class="custom-bar-item">
-              <div class="custom-bar-header"><span>Ready Today</span><span>79% (79 Apps)</span></div>
-              <div class="custom-bar-track"><div class="custom-bar-fill" style="width: 79%; background: #10b981;"></div></div>
+              <div class="custom-bar-header"><span>Ready Today</span><span>${Math.round(ready/t*100)}% (${ready} Apps)</span></div>
+              <div class="custom-bar-track"><div class="custom-bar-fill" style="width: ${Math.round(ready/t*100)}%; background: #10b981;"></div></div>
             </div>
             <div class="custom-bar-item">
-              <div class="custom-bar-header"><span>Workaround Required</span><span>13% (13 Apps)</span></div>
-              <div class="custom-bar-track"><div class="custom-bar-fill" style="width: 13%; background: #f59e0b;"></div></div>
+              <div class="custom-bar-header"><span>Workaround Required</span><span>${Math.round(workaround/t*100)}% (${workaround} Apps)</span></div>
+              <div class="custom-bar-track"><div class="custom-bar-fill" style="width: ${Math.round(workaround/t*100)}%; background: #f59e0b;"></div></div>
             </div>
             <div class="custom-bar-item">
-              <div class="custom-bar-header"><span>Blocked / Gated</span><span>8% (8 Apps)</span></div>
-              <div class="custom-bar-track"><div class="custom-bar-fill" style="width: 8%; background: #f43f5e;"></div></div>
+              <div class="custom-bar-header"><span>Blocked / Gated</span><span>${Math.round(blocked/t*100)}% (${blocked} Apps)</span></div>
+              <div class="custom-bar-track"><div class="custom-bar-fill" style="width: ${Math.round(blocked/t*100)}%; background: #f43f5e;"></div></div>
             </div>
           </div>
         `;
       }
 
-      // Gating Bars
       const gatingBox = document.getElementById('gatingChartContainer');
       if (gatingBox) {
         gatingBox.innerHTML = `
           <div class="custom-bar-list">
             <div class="custom-bar-item">
-              <div class="custom-bar-header"><span>Self-Serve Free/Trial</span><span>81% (81 Apps)</span></div>
-              <div class="custom-bar-track"><div class="custom-bar-fill" style="width: 81%; background: #10b981;"></div></div>
+              <div class="custom-bar-header"><span>Self-Serve Free/Trial</span><span>${Math.round(selfserve/t*100)}% (${selfserve} Apps)</span></div>
+              <div class="custom-bar-track"><div class="custom-bar-fill" style="width: ${Math.round(selfserve/t*100)}%; background: #10b981;"></div></div>
             </div>
             <div class="custom-bar-item">
-              <div class="custom-bar-header"><span>Paid / Sandbox Only</span><span>8% (8 Apps)</span></div>
-              <div class="custom-bar-track"><div class="custom-bar-fill" style="width: 8%; background: #f59e0b;"></div></div>
+              <div class="custom-bar-header"><span>Paid / Sandbox Only</span><span>${Math.round(sandbox/t*100)}% (${sandbox} Apps)</span></div>
+              <div class="custom-bar-track"><div class="custom-bar-fill" style="width: ${Math.round(sandbox/t*100)}%; background: #f59e0b;"></div></div>
             </div>
             <div class="custom-bar-item">
-              <div class="custom-bar-header"><span>Enterprise Partner Gated</span><span>11% (11 Apps)</span></div>
-              <div class="custom-bar-track"><div class="custom-bar-fill" style="width: 11%; background: #f43f5e;"></div></div>
+              <div class="custom-bar-header"><span>Enterprise Partner Gated</span><span>${Math.round(gated/t*100)}% (${gated} Apps)</span></div>
+              <div class="custom-bar-track"><div class="custom-bar-fill" style="width: ${Math.round(gated/t*100)}%; background: #f43f5e;"></div></div>
             </div>
           </div>
         `;
@@ -1370,13 +1468,13 @@
     }
 
     function initCharts() {
-      // Always render crisp custom bars first to guarantee 0 empty boxes
-      renderFallbackBars();
+      const metrics = calculateMetrics(appDataset);
+      if (!metrics) return;
 
-      // Try initializing Chart.js canvas charts if Chart library is loaded
+      renderFallbackBars(metrics);
+
       if (typeof Chart !== 'undefined') {
         try {
-          // Re-create canvases for Chart.js
           document.getElementById('authChartContainer').innerHTML = '<canvas id="authChart"></canvas>';
           document.getElementById('verdictChartContainer').innerHTML = '<canvas id="verdictChart"></canvas>';
           document.getElementById('gatingChartContainer').innerHTML = '<canvas id="gatingChart"></canvas>';
@@ -1388,7 +1486,7 @@
               data: {
                 labels: ['OAuth2 (Delegated)', 'API Key / PAT', 'Basic / Token / Custom'],
                 datasets: [{
-                  data: [46, 41, 13],
+                  data: metrics.auth,
                   backgroundColor: ['#8b5cf6', '#10b981', '#06b6d4'],
                   borderWidth: 0
                 }]
@@ -1410,7 +1508,7 @@
               data: {
                 labels: ['Self-Serve Free/Trial', 'Paid / Sandbox Only', 'Enterprise Gated'],
                 datasets: [{
-                  data: [81, 8, 11],
+                  data: metrics.gating,
                   backgroundColor: ['#10b981', '#f59e0b', '#f43f5e'],
                   borderWidth: 0
                 }]
@@ -1433,7 +1531,7 @@
                 labels: ['Ready Today', 'Workaround Required', 'Blocked'],
                 datasets: [{
                   label: 'Apps Count',
-                  data: [79, 13, 8],
+                  data: metrics.verdict,
                   backgroundColor: ['#10b981', '#f59e0b', '#f43f5e'],
                   borderRadius: 6
                 }]
@@ -1451,7 +1549,7 @@
           }
         } catch (e) {
           console.warn('Chart.js render fallback:', e);
-          renderFallbackBars();
+          renderFallbackBars(metrics);
         }
       }
     }
