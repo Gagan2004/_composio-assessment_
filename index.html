@@ -762,9 +762,6 @@
       <button class="tab-btn" onclick="switchTab('verification')">
         <i class="fa-solid fa-microscope"></i> Verification & Accuracy Audit
       </button>
-      <button class="tab-btn" onclick="switchTab('agent')">
-        <i class="fa-solid fa-robot"></i> Agent Architecture & Code
-      </button>
     </div>
 
     <!-- TAB 1: PATTERNS & HEADLINES -->
@@ -935,40 +932,6 @@
             <!-- Rendered dynamically -->
           </tbody>
         </table>
-      </div>
-
-    </div>
-
-    <!-- TAB 4: AGENT ARCHITECTURE & CODE -->
-    <div id="tab-agent" class="tab-content" style="display: none;">
-      
-      <div class="section-title"><i class="fa-solid fa-code" style="color: var(--accent-purple);"></i> Agent Implementation & Code</div>
-      <div class="section-sub">Source code for the automated research and verification pipeline (`src/verifier.py`).</div>
-
-      <div class="code-box">
-        <pre><span class="cm"># src/verifier.py — Direct AI Research & Verification Agent Pipeline</span>
-<span class="kw">import</span> json, os, re, time, threading
-<span class="kw">from</span> concurrent.futures <span class="kw">import</span> ThreadPoolExecutor, as_completed
-<span class="kw">from</span> google <span class="kw">import</span> genai
-
-<span class="cm"># 1. Ingest raw apps directly from data/apps_raw.json</span>
-<span class="cm"># 2. Concurrent HTTP scraping & signal parsing (15 workers)</span>
-<span class="cm"># 3. Gemini 2.5 Flash inference (gemini-flash-latest)</span>
-<span class="cm"># 4. JSON Schema & logic validation (validate_schema_and_rules)</span>
-
-<span class="kw">def</span> <span class="fn">run_verification_pipeline</span>():
-    keys = load_api_keys()
-    rotator = GeminiKeyRotator(keys)
-    
-    <span class="kw">with</span> ThreadPoolExecutor(max_workers=15) <span class="kw">as</span> executor:
-        futures = {executor.submit(verify_single_url, app): app[<span class="str">"id"</span>] <span class="kw">for</span> app <span class="kw">in</span> raw_apps}
-        
-    <span class="kw">with</span> ThreadPoolExecutor(max_workers=5) <span class="kw">as</span> executor:
-        futures = {executor.submit(gemini_infer_app_metadata, app, signals, excerpt, rotator): app[<span class="str">"id"</span>] <span class="kw">for</span> app <span class="kw">in</span> apps}
-
-    <span class="cm"># Output verified dataset</span>
-    with open(<span class="str">"data/apps_pass2_verified.json"</span>, <span class="str">"w"</span>) <span class="kw">as</span> f:
-        json.dump(verified_output, f, indent=2)</pre>
       </div>
 
     </div>
