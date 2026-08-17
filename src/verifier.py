@@ -456,7 +456,7 @@ def gemini_infer_app_metadata(
             time.sleep(INTER_REQUEST_DELAY_S)
             try:
                 response = client.models.generate_content(
-                    model="gemini-2.5-flash",
+                    model="gemini-flash-latest",
                     contents=prompt,
                     config=types.GenerateContentConfig(
                         response_mime_type="application/json",
