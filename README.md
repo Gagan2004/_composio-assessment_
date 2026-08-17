@@ -10,15 +10,20 @@
 Run the entire pipeline and view the interactive dashboard in 3 simple steps:
 
 ```bash
-# 1. Install dependencies
+# Step 1: Install dependencies
 pip install google-genai google-generativeai
 
-# 2. Run the AI Research Pipeline & Embed dataset into index.html
+# Step 2: FIRST run the AI Research Pipeline to generate data/apps_pass2_verified.json
 python src/verifier.py
+
+# Step 3: AFTER src/verifier.py finishes successfully, embed the dataset into index.html
 python src/embed_html.py
 
-# 3. Open index.html in your browser!
+# Step 4: Open index.html in your browser!
 ```
+
+> [!IMPORTANT]
+> **Execution Sequence**: You MUST run `python src/verifier.py` **first**. Only after `src/verifier.py` completes successfully and produces `data/apps_pass2_verified.json` should you proceed to run `python src/embed_html.py`.
 
 ---
 
@@ -46,7 +51,7 @@ GEMINI_API_KEY_3=your_third_gemini_key
 
 ## 🚀 How to Run the Project
 
-### Step 1: Run the AI Research & Verification Agent
+### Step 1: Run the AI Research & Verification Agent (FIRST)
 Executes `src/verifier.py` to ingest 100 raw app records from `data/apps_raw.json`, perform concurrent live scraping, and run Gemini 2.5 Flash structured inference:
 
 ```bash
@@ -62,7 +67,11 @@ python src/verifier.py
 
 ---
 
-### Step 2: Embed Verified Data into `index.html`
+### Step 2: Embed Verified Data into `index.html` (AFTER Step 1 Completes)
+
+> [!IMPORTANT]
+> **Prerequisite**: Ensure `python src/verifier.py` has completed successfully before running this step.
+
 Executes `src/embed_html.py` to embed `data/apps_pass2_verified.json` directly into `index.html`:
 
 ```bash
