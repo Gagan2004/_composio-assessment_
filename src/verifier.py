@@ -64,85 +64,39 @@ VALID_GATING_CATEGORIES = {
 
 # ── Gemini concurrency config ─────────────────────────────────────────────────
 
-GEMINI_MAX_WORKERS    = 5    # parallel Gemini threads across 5 active keys
+GEMINI_MAX_WORKERS    = 3    # parallel Gemini threads for single key throughput
 GEMINI_SEMAPHORE      = threading.Semaphore(GEMINI_MAX_WORKERS)
-INTER_REQUEST_DELAY_S = 0.3  # seconds between successive Gemini calls per worker
+INTER_REQUEST_DELAY_S = 0.5  # seconds between successive Gemini calls per worker
 
-# ── API key loader & Rotator ──────────────────────────────────────────────────
+# ── API key loader ────────────────────────────────────────────────────────────
 
-def load_api_keys() -> list[str]:
+def load_api_key() -> str:
     """
-    Loads all GEMINI_API_KEY_N keys (N = 1, 2, …) from environment variables
+    Loads GEMINI_API_KEY (or fallback GEMINI_API_KEY_1) from environment variables
     first, then falls back to a .env file in the project root.
-    Returns a non-empty list of key strings, or raises EnvironmentError.
+    Returns a single valid key string, or raises EnvironmentError.
     """
-    keys: list[str] = []
+    key = os.environ.get("GEMINI_API_KEY", "").strip() or os.environ.get("GEMINI_API_KEY_1", "").strip()
 
-    for n in range(1, 21):
-        k = os.environ.get(f"GEMINI_API_KEY_{n}", "").strip()
-        if k:
-            keys.append(k)
-        elif n > 1:
-            break
-
-    if not keys:
-        k = os.environ.get("GEMINI_API_KEY", "").strip()
-        if k:
-            keys.append(k)
-
-    if not keys:
+    if not key:
         env_path = os.path.join(os.path.dirname(__file__), "..", ".env")
         if os.path.exists(env_path):
             with open(env_path, encoding="utf-8") as f:
-                numbered: dict[int, str] = {}
-                single = ""
                 for line in f:
                     line = line.strip()
                     if not line or line.startswith("#"):
                         continue
-                    for n in range(1, 21):
-                        prefix = f"GEMINI_API_KEY_{n}="
-                        if line.startswith(prefix):
-                            numbered[n] = line.split("=", 1)[1].strip().strip('"').strip("'")
+                    if line.startswith("GEMINI_API_KEY"):
+                        key = line.split("=", 1)[1].strip().strip('"').strip("'")
+                        if key:
                             break
-                    else:
-                        if line.startswith("GEMINI_API_KEY="):
-                            single = line.split("=", 1)[1].strip().strip('"').strip("'")
 
-            if numbered:
-                keys = [v for _, v in sorted(numbered.items())]
-            elif single:
-                keys = [single]
-
-    if not keys:
+    if not key:
         raise EnvironmentError(
-            "[ERROR] No Gemini API keys found.\n"
-            "  Add GEMINI_API_KEY_1=<key> … GEMINI_API_KEY_N=<key> to your .env file."
+            "[ERROR] No GEMINI_API_KEY found.\n"
+            "  Add GEMINI_API_KEY=<your_api_key> to your .env file or environment."
         )
-    return keys
-
-
-class GeminiKeyRotator:
-    """
-    Thread-safe round-robin Gemini client rotator.
-    Pre-creates one genai.Client per key and rotates through them
-    on every next_client() call using an atomic index increment.
-    """
-    def __init__(self, keys: list[str]):
-        self._clients = [genai.Client(api_key=k) for k in keys]
-        self._index   = 0
-        self._lock    = threading.Lock()
-
-    def next_client(self) -> genai.Client:
-        """Returns the next client in round-robin order (thread-safe)."""
-        with self._lock:
-            client = self._clients[self._index]
-            self._index = (self._index + 1) % len(self._clients)
-        return client
-
-    @property
-    def key_count(self) -> int:
-        return len(self._clients)
+    return key
 
 # ── HTML scraping & heuristic signal detection ────────────────────────────────
 
@@ -434,12 +388,11 @@ def synthesize_heuristic_fallback(app: dict, signals: list[str]) -> dict:
 
 
 def gemini_infer_app_metadata(
-    app: dict, signals: list[str], excerpt: str, rotator: GeminiKeyRotator
+    app: dict, signals: list[str], excerpt: str, client: genai.Client
 ) -> dict:
     """
     Calls Gemini 2.5 Flash with a focused prompt built from heuristic signals
-    and a signal-rich HTML excerpt. Obtains the next client from the key rotator
-    on every call, distributing load across all available API keys.
+    and a signal-rich HTML excerpt using a single GEMINI_API_KEY client.
     Falls back to heuristic signal synthesis when live API calls hit rate limits (429).
     """
     signals_text = (
@@ -461,11 +414,10 @@ def gemini_infer_app_metadata(
         excerpt=excerpt_text,
     )
 
-    max_attempts = rotator.key_count * 2
+    max_attempts = 3
     last_error = ""
     for attempt in range(max_attempts):
         with GEMINI_SEMAPHORE:
-            client = rotator.next_client()
             time.sleep(INTER_REQUEST_DELAY_S)
             try:
                 response = client.models.generate_content(
@@ -488,7 +440,7 @@ def gemini_infer_app_metadata(
             except Exception as e:
                 last_error = str(e)
                 if ("429" in last_error or "RESOURCE_EXHAUSTED" in last_error or "quota" in last_error.lower()) and attempt < max_attempts - 1:
-                    time.sleep(0.5)
+                    time.sleep(1.0)
                     continue
 
     return synthesize_heuristic_fallback(app, signals)
@@ -538,9 +490,9 @@ def format_evidence_url(website_hint: str) -> str:
 def run_verification_pipeline():
     print("[+] Launching Direct AI Research & Verification Agent Pipeline...")
 
-    keys    = load_api_keys()
-    rotator = GeminiKeyRotator(keys)
-    print(f"[+] Gemini rotator initialised ({rotator.key_count} active keys | model: gemini-2.5-flash)")
+    api_key = load_api_key()
+    client  = genai.Client(api_key=api_key)
+    print(f"[+] Gemini client initialised with single API key (model: gemini-2.5-flash)")
 
     if not os.path.exists(RAW_FILE):
         print(f"[ERROR] Raw input file not found at {RAW_FILE}")
@@ -577,7 +529,7 @@ def run_verification_pipeline():
         _, http_status, signals, html_raw = scrape_results.get(app_id, (0, "Not Checked", [], ""))
         excerpt   = extract_relevant_excerpt(html_raw)
         t0        = time.time()
-        inferred  = gemini_infer_app_metadata(app, signals, excerpt, rotator)
+        inferred  = gemini_infer_app_metadata(app, signals, excerpt, client)
         latency   = round((time.time() - t0) * 1000)
         return app_id, inferred, latency
 
