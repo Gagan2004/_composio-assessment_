@@ -317,7 +317,7 @@
       min-width: 260px;
     }
 
-    .search-box i {
+    .search-box i.fa-magnifying-glass {
       position: absolute;
       left: 14px;
       top: 50%;
@@ -325,20 +325,38 @@
       color: var(--text-dim);
     }
 
+    .search-clear-btn {
+      position: absolute;
+      right: 12px;
+      top: 50%;
+      transform: translateY(-50%);
+      background: none;
+      border: none;
+      color: var(--text-dim);
+      cursor: pointer;
+      font-size: 14px;
+      display: none;
+    }
+
+    .search-clear-btn:hover {
+      color: #fff;
+    }
+
     .search-box input {
       width: 100%;
       background: var(--bg-card);
       border: 1px solid var(--border-color);
       border-radius: 10px;
-      padding: 10px 14px 10px 40px;
+      padding: 10px 36px 10px 40px;
       color: #fff;
       font-size: 14px;
       outline: none;
-      transition: border-color 0.2s;
+      transition: border-color 0.2s, box-shadow 0.2s;
     }
 
     .search-box input:focus {
       border-color: var(--accent-primary);
+      box-shadow: 0 0 12px var(--accent-glow);
     }
 
     .filter-pills {
@@ -357,6 +375,9 @@
       font-weight: 600;
       cursor: pointer;
       transition: all 0.2s ease;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
     }
 
     .pill:hover {
@@ -365,9 +386,10 @@
     }
 
     .pill.active {
-      background: var(--accent-primary);
+      background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%);
       color: #fff;
       border-color: var(--accent-primary);
+      box-shadow: 0 0 12px rgba(99, 102, 241, 0.35);
     }
 
     /* Data Table Styling */
@@ -376,6 +398,8 @@
       border: 1px solid var(--border-color);
       border-radius: 16px;
       overflow: hidden;
+      overflow-y: auto;
+      max-height: 680px;
       margin-bottom: 40px;
       box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
     }
@@ -388,7 +412,10 @@
     }
 
     th {
-      background: rgba(255, 255, 255, 0.03);
+      background: #111827;
+      position: sticky;
+      top: 0;
+      z-index: 10;
       color: var(--text-muted);
       font-weight: 700;
       text-transform: uppercase;
@@ -396,6 +423,25 @@
       letter-spacing: 0.06em;
       padding: 14px 16px;
       border-bottom: 1px solid var(--border-color);
+      cursor: pointer;
+      user-select: none;
+      transition: color 0.15s, background 0.15s;
+    }
+
+    th:hover {
+      color: #ffffff;
+      background: #1e293b;
+    }
+
+    th i.sort-icon {
+      margin-left: 4px;
+      font-size: 10px;
+      opacity: 0.5;
+    }
+
+    th.sorted i.sort-icon {
+      opacity: 1;
+      color: var(--accent-primary);
     }
 
     td {
@@ -412,6 +458,24 @@
 
     tbody tr:hover {
       background: var(--bg-card-hover);
+    }
+
+    .modal-copy-btn {
+      float: right;
+      background: rgba(255, 255, 255, 0.08);
+      border: 1px solid var(--border-color);
+      color: var(--text-main);
+      padding: 5px 12px;
+      border-radius: 6px;
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .modal-copy-btn:hover {
+      background: var(--accent-primary);
+      color: #fff;
     }
 
     .app-title-cell {
@@ -819,6 +883,7 @@
         <div class="search-box">
           <i class="fa-solid fa-magnifying-glass"></i>
           <input type="text" id="searchInput" placeholder="Search app name, category, auth, or verdict..." oninput="filterTable()">
+          <button class="search-clear-btn" id="searchClearBtn" onclick="clearSearch()" title="Clear search"><i class="fa-solid fa-circle-xmark"></i></button>
         </div>
 
         <div class="filter-pills" id="categoryPills">
@@ -841,11 +906,11 @@
         <table>
           <thead>
             <tr>
-              <th>#</th>
-              <th>App Name & Category</th>
-              <th>Auth Method</th>
-              <th>Self-Serve Status</th>
-              <th>Buildability Verdict</th>
+              <th onclick="sortTable('id')" id="th-id"># <i class="fa-solid fa-sort sort-icon"></i></th>
+              <th onclick="sortTable('name')" id="th-name">App Name & Category <i class="fa-solid fa-sort sort-icon"></i></th>
+              <th onclick="sortTable('auth')" id="th-auth">Auth Method <i class="fa-solid fa-sort sort-icon"></i></th>
+              <th onclick="sortTable('gating')" id="th-gating">Self-Serve Status <i class="fa-solid fa-sort sort-icon"></i></th>
+              <th onclick="sortTable('verdict')" id="th-verdict">Buildability Verdict <i class="fa-solid fa-sort sort-icon"></i></th>
               <th>Main Blocker / Note</th>
               <th>Doc Evidence</th>
             </tr>
@@ -961,6 +1026,7 @@ python src/verifier.py ; python src/embed_html.py
   <div class="modal-overlay" id="detailModal" onclick="closeModal(event)">
     <div class="modal-card" onclick="event.stopPropagation()">
       <button class="modal-close" onclick="closeModal()"><i class="fa-solid fa-xmark"></i></button>
+      <button class="modal-copy-btn" id="modalCopyBtn" onclick="copyAppDetails()"><i class="fa-regular fa-copy"></i> Copy Details</button>
       <div class="modal-title" id="modalAppName">App Name</div>
       <div class="modal-cat" id="modalAppCat">Category</div>
 
